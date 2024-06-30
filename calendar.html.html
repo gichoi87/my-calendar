@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2024년 달력</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 10px;
+        }
+        .calendar {
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: center;
+            cursor: pointer;
+            min-width: 40px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .sunday {
+            color: red;
+        }
+        .saturday {
+            color: blue;
+        }
+        .schedule-input {
+            display: none;
+            position: fixed;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            padding: 10px;
+            z-index: 1000;
+            width: 90%;
+            max-width: 300px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .schedule-list {
+            margin-top: 20px;
+        }
+        .schedule-item {
+            margin-bottom: 10px;
+            word-wrap: break-word;
+        }
+        .month-buttons {
+            margin-bottom: 20px;
+        }
+        .month-buttons button {
+            margin: 2px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="month-buttons" id="monthButtons">
+        <!-- 1월부터 12월까지 버튼을 생성 -->
+        <button onclick="showMonth(0)">1월</button>
+        <button onclick="showMonth(1)">2월</button>
+        <button onclick="showMonth(2)">3월</button>
+        <button onclick="showMonth(3)">4월</button>
+        <button onclick="showMonth(4)">5월</button>
+        <button onclick="showMonth(5)">6월</button>
+        <button onclick="showMonth(6)">7월</button>
+        <button onclick="showMonth(7)">8월</button>
+        <button onclick="showMonth(8)">9월</button>
+        <button onclick="showMonth(9)">10월</button>
+        <button onclick="showMonth(10)">11월</button>
+        <button onclick="showMonth(11)">12월</button>
+    </div>
+
+    <div class="calendar" id="calendar"></div>
+
+    <div class="schedule-input" id="scheduleInput">
+        <label for="schedule">일정 입력:</label>
+        <input type="text" id="schedule" name="schedule">
+        <button onclick="saveSchedule()">저장</button>
+    </div>
+
+    <div class="schedule-list" id="scheduleList">
+        <h3>일정 목록</h3>
+        <div id="schedules"></div>
+    </div>
+
+    <script>
+        function showMonth(month) {
+            createCalendar(month);
+            document.getElementById('calendar').style.display = 'block';
+        }
+
+        function createCalendar(month) {
+            const calendarDiv = document.getElementById('calendar');
+            const table = document.createElement('table');
+            const thead = document.createElement('thead');
+            const tbody = document.createElement('tbody');
+
+            const daysOfWeek = ['일', '월', '화', '수', '목', '금', '토'];
+            const daysInMonth = new Date(2024, month + 1, 0).getDate();
+            const firstDay = new Date(2024, month, 1).getDay();
+
+            // Create header row
+            const headerRow = document.createElement('tr');
+            daysOfWeek.forEach(day => {
+                const th = document.createElement('th');
+                th.innerText = day;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+
+            // Create days
+            let date = 1;
+            for (let i = 0; i < 6; i++) { // 6 rows (weeks)
+                const row = document.createElement('tr');
+                for (let j = 0; j < 7; j++) { // 7 columns (days)
+                    const cell = document.createElement('td');
+                    if (i === 0 && j < firstDay) {
+                        cell.innerText = '';
+                    } else if (date > daysInMonth) {
+                        cell.innerText = '';
+                    } else {
+                        cell.innerText = date;
+                        cell.setAttribute('data-date', `${2024}-${month + 1}-${date}`);
+                        cell.addEventListener('click', function(event) {
+                            openScheduleInput(event, cell);
+                        });
+                        if (j === 0) { // Sunday
+                            cell.classList.add('sunday');
+                        } else if (j === 6) { // Saturday
+                            cell.classList.add('saturday');
+                        }
+                        date++;
+                    }
+                    row.appendChild(cell);
+                }
+                tbody.appendChild(row);
+            }
+
+            table.appendChild(thead);
+            table.appendChild(tbody);
+            calendarDiv.innerHTML = '';
+            calendarDiv.appendChild(table);
+        }
+
+        function openScheduleInput(event, cell) {
+            const scheduleInput = document.getElementById('scheduleInput');
+            scheduleInput.style.display = 'block';
+            scheduleInput.style.top = window.scrollY + event.clientY + 'px';
+            scheduleInput.style.left = (window.innerWidth - scheduleInput.offsetWidth) / 2 + 'px';
+            scheduleInput.setAttribute('data-date', cell.getAttribute('data-date'));
+        }
+
+        function saveSchedule() {
+            const scheduleInput = document.getElementById('scheduleInput');
+            const date = scheduleInput.getAttribute('data-date');
+            const schedule = document.getElementById('schedule').value;
+            const cell = document.querySelector(`td[data-date='${date}']`);
+            const schedulesDiv = document.getElementById('schedules');
+
+            if (schedule) {
+                // Add schedule to calendar cell
+                cell.innerHTML += `<div>${schedule}</div>`;
+
+                // Add schedule to schedule list
+                const scheduleItem = document.createElement('div');
+                scheduleItem.classList.add('schedule-item');
+                scheduleItem.innerText = `${date}: ${schedule}`;
+                schedulesDiv.appendChild(scheduleItem);
+
+                // Clear input field and hide input box
+                document.getElementById('schedule').value = '';
+                scheduleInput.style.display = 'none';
+            }
+        }
+
+        document.addEventListener('click', function(event) {
+            const scheduleInput = document.getElementById('scheduleInput');
+            if (!scheduleInput.contains(event.target) && event.target.tagName !== 'TD') {
+                scheduleInput.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
